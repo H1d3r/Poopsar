@@ -10,7 +10,7 @@ namespace Pulsar.Common.Networking
 {
     /// <summary>
     /// High-performance MessagePack serializer for Pulsar messages with polymorphic support.
-    /// Optimized for MessagePack 3.1.4 with minimal overhead.
+    /// Optimized for MessagePack 3.1.4 with AOT compatibility.
     /// </summary>
     public static class PulsarMessagePackSerializer
     {
@@ -20,19 +20,16 @@ namespace Pulsar.Common.Networking
         private static bool _initialized = false;
 
         /// <summary>
-        /// MessagePack options configuration optimized for performance
+        /// MessagePack options configuration optimized for AOT compatibility
         /// </summary>
         private static readonly MessagePackSerializerOptions _options = MessagePackSerializerOptions.Standard
             .WithResolver(CompositeResolver.Create(
-                // Enable dynamic enum serialization
-                DynamicEnumAsStringResolver.Instance,
-                // Enable dynamic generic type serialization  
-                DynamicGenericResolver.Instance,
-                // Enable dynamic union (polymorphic) serialization
-                DynamicUnionResolver.Instance,
-                // Enable dynamic object serialization
-                DynamicObjectResolver.Instance,
-                // Standard resolver for primitive types
+                // Use static resolvers that work with AOT
+                BuiltinResolver.Instance,
+                AttributeFormatterResolver.Instance,
+                // Add PrimitiveObjectResolver for basic object serialization
+                PrimitiveObjectResolver.Instance,
+                // Remove dynamic resolvers for AOT compatibility
                 StandardResolver.Instance
             ))
             .WithCompression(MessagePackCompression.Lz4BlockArray); // Add compression for better performance
@@ -56,13 +53,25 @@ namespace Pulsar.Common.Networking
                 // Serialize the message directly without using object type
                 var messageData = MessagePackSerializer.Serialize(messageType, message, _options);
                 
+                if (messageData == null || messageData.Length == 0)
+                {
+                    throw new InvalidOperationException($"MessagePack serialization returned null or empty data for type {messageType.Name}");
+                }
+                
                 var wrapper = new MessageWrapper
                 {
                     TypeName = typeName,
                     Data = messageData
                 };
 
-                return MessagePackSerializer.Serialize(wrapper, _options);
+                var result = MessagePackSerializer.Serialize(wrapper, _options);
+                
+                if (result == null || result.Length == 0)
+                {
+                    throw new InvalidOperationException($"MessagePack wrapper serialization failed for type {messageType.Name}");
+                }
+                
+                return result;
             }
             catch (Exception ex)
             {

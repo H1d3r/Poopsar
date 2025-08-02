@@ -349,37 +349,6 @@ namespace Pulsar.Client.Anti.Helper
         }
 
         /// <summary>
-        /// Gets the entry assembly directly using internal .NET functions using reflection.
-        /// </summary>
-        /// <returns>if successful then it returns the entry assembly, otherwise null.</returns>
-        public static Assembly LowLevelGetEntryAssembly()
-        {
-            if (!IsReflectionEnabled(false, true))
-                return null;
-            Assembly EntryAsm = null;
-            try
-            {
-                IntPtr AsmPtr = UnsafeCastToStackPointer(ref EntryAsm);
-                if (AsmPtr != IntPtr.Zero)
-                {
-                    Type ObjectHandleOnStackType = Type.GetType("System.Runtime.CompilerServices.ObjectHandleOnStack");
-                    if (ObjectHandleOnStackType != null)
-                    {
-                        object InstanceObjectHandle = Activator.CreateInstance(ObjectHandleOnStackType);
-                        FieldInfo mPtrFieldObjectHandle = ObjectHandleOnStackType.GetField("m_ptr", BindingFlags.NonPublic | BindingFlags.Instance);
-                        mPtrFieldObjectHandle.SetValue(InstanceObjectHandle, AsmPtr);
-                        Utils.CallInternalCLRFunction("GetEntryAssembly", typeof(AppDomainManager), BindingFlags.NonPublic | BindingFlags.Static, null, new object[] { InstanceObjectHandle }, null);
-                    }
-                }
-            }
-            catch
-            {
-                return null;
-            }
-            return EntryAsm;
-        }
-
-        /// <summary>
         /// Gets the currently executing assembly directly using internal .NET functions using reflection.
         /// </summary>
         /// <returns>if successful then it returns the executing assembly, otherwise null.</returns>

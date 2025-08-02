@@ -37,12 +37,13 @@ namespace Pulsar.Server.Build
                 // PHASE 1 - Writing settings
                 WriteSettings(asmDef);
 
-                // PHASE 2 - Obfuscation
-
-                Renamer r = new Renamer(asmDef);
-
-                if (!r.Perform())
-                    throw new Exception("renaming failed");
+                // PHASE 2 - Obfuscation (only if obfuscateBuild is true)
+                if (obfuscateBuild)
+                {
+                    Renamer r = new Renamer(asmDef);
+                    if (!r.Perform())
+                        throw new Exception("renaming failed");
+                }
 
                 MemoryStream stream = new MemoryStream();
                 asmDef.Write(stream);
@@ -64,10 +65,7 @@ namespace Pulsar.Server.Build
                     buffer = tinyLoader.Save();
                 }
 
-
                 File.WriteAllBytes(_options.OutputPath, buffer);
-
-
             }
 
             // PHASE 4 - Assembly Information changing

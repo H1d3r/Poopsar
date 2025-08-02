@@ -9,7 +9,7 @@ namespace Pulsar.Common.Helpers
         {
             try
             {
-                Clipboard.SetText(text);
+                System.Windows.Forms.Clipboard.SetText(text);
             }
             catch (Exception)
             {

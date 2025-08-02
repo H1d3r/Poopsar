@@ -308,7 +308,7 @@ namespace Pulsar.Client.Helper
                     {
                         // try to get the desktop image
                         // 0 timeout means return immediately even if no new frame
-                        outputDuplication.AcquireNextFrame(100, out frameInfo, out desktopResource);
+                        outputDuplication.TryAcquireNextFrame(100, out frameInfo, out desktopResource);
 
                         using (var texture2D = desktopResource.QueryInterface<Texture2D>())
                         {

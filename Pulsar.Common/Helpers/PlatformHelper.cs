@@ -21,16 +21,35 @@ namespace Pulsar.Common.Helpers
             RunningOnMono = Type.GetType("Mono.Runtime") != null;
 
             Name = "Unknown OS";
-            using (var searcher = new ManagementObjectSearcher("SELECT Caption FROM Win32_OperatingSystem"))
+            
+            try
             {
-                foreach (ManagementObject os in searcher.Get())
+                // Try to get OS name via WMI, but handle failures gracefully for AOT compatibility
+                using (var searcher = new ManagementObjectSearcher("SELECT Caption FROM Win32_OperatingSystem"))
                 {
-                    Name = os["Caption"].ToString();
-                    break;
+                    foreach (ManagementObject os in searcher.Get())
+                    {
+                        Name = os["Caption"]?.ToString() ?? "Unknown OS";
+                        break;
+                    }
+                }
+
+                Name = Regex.Replace(Name, "^.*(?=Windows)", "").TrimEnd().TrimStart(); // Remove everything before first match "Windows" and trim end & start
+            }
+            catch (Exception)
+            {
+                // Fallback for AOT or when WMI is not available
+                Name = Environment.OSVersion.VersionString;
+                if (Name.Contains("Windows"))
+                {
+                    Name = Name.Substring(Name.IndexOf("Windows"));
+                }
+                else
+                {
+                    Name = "Windows";
                 }
             }
-
-            Name = Regex.Replace(Name, "^.*(?=Windows)", "").TrimEnd().TrimStart(); // Remove everything before first match "Windows" and trim end & start
+            
             Is64Bit = Environment.Is64BitOperatingSystem;
             FullName = $"{Name} {(Is64Bit ? 64 : 32)} Bit";
         }

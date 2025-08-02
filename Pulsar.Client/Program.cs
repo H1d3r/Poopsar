@@ -20,6 +20,8 @@ namespace Pulsar.Client
         [STAThread]
         private static void Main()
         {
+            ComWrappers.RegisterForMarshalling(WinFormsComInterop.WinFormsComWrappers.Instance);
+
             // enable TLS 1.2
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 

